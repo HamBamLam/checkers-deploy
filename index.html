@@ -38,7 +38,7 @@
             height: 100%;
         }
 
-        /* Loading spinner (optional) */
+        /* Optional loading spinner */
         .centered {
             position: absolute;
             top: 50%;
@@ -54,24 +54,28 @@
 <body>
     <canvas id="the_canvas_id"></canvas>
 
-    <!-- Loading WASM after page is fully loaded -->
     <script type="module">
     window.onload = async () => {
-        // Import the main JS and WASM
-        import init, * as bindings from './checkers_attempt-d019453c7ffcfbd6.js';
-        const wasm = await init({ module_or_path: './checkers_attempt-d019453c7ffcfbd6_bg.wasm' });
+        try {
+            // Dynamic import (inside function)
+            const { default: init, ...bindings } = await import('./checkers_attempt-d019453c7ffcfbd6.js');
+            const wasm = await init({ module_or_path: './checkers_attempt-d019453c7ffcfbd6_bg.wasm' });
 
-        window.wasmBindings = bindings;
-        dispatchEvent(new CustomEvent("TrunkApplicationStarted", { detail: { wasm } }));
+            window.wasmBindings = bindings;
+            dispatchEvent(new CustomEvent("TrunkApplicationStarted", { detail: { wasm } }));
 
-        // Register service worker if available
-        if ('serviceWorker' in navigator && window.location.hash !== "#dev") {
-            try {
-                await navigator.serviceWorker.register('./assets/sw.js');
-                console.log("Service worker registered.");
-            } catch (err) {
-                console.warn("Service worker registration failed:", err);
+            // Service worker registration
+            if ('serviceWorker' in navigator && window.location.hash !== "#dev") {
+                try {
+                    await navigator.serviceWorker.register('./assets/sw.js');
+                    console.log("Service worker registered.");
+                } catch (err) {
+                    console.warn("Service worker registration failed:", err);
+                }
             }
+
+        } catch (err) {
+            console.error("WASM initialization failed:", err);
         }
     };
     </script>
